@@ -1,0 +1,6 @@
+# 8000:8000 is host:container. The process listens on 8000 inside the container.
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"

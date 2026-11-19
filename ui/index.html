@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FastAPI status codes</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <p class="kicker">FastAPI lab</p>
+    <h1>422, 401, and 200</h1>
+    <p class="lede">Same request from this page and from curl. Both hit the container. Change one thing at a time: the header, the token, or the body.</p>
+  </header>
+
+  <main>
+    <section class="card span" aria-labelledby="docker-heading">
+      <h2 id="docker-heading">Dockerfile</h2>
+      <p class="hint">FastAPI and this page run only in the container. <code>docker compose up --build</code> builds this file. Do not start uvicorn on the laptop.</p>
+      <ol class="steps">
+        <li>
+          <code>FROM python:3.12-slim</code>
+          <span>The base image. Python lives in the image.</span>
+        </li>
+        <li>
+          <code>WORKDIR /app</code>
+          <span>Later paths are /app inside the image, not a folder on the laptop.</span>
+        </li>
+        <li>
+          <code>COPY requirements.txt .</code>
+          <span>then <code>RUN pip install</code>. Install before the code. An edit to app.py does not reinstall FastAPI.</span>
+        </li>
+        <li>
+          <code>COPY app.py .</code>
+          <span>and <code>COPY ui ./ui</code>. The API and this page both go into the image.</span>
+        </li>
+        <li>
+          <code>EXPOSE 8000</code>
+          <span>Documents the port inside the container. It does not publish that port.</span>
+        </li>
+        <li>
+          <code>CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]</code>
+          <span>0.0.0.0 is required. 127.0.0.1 would answer only inside the container, and the published port could not reach it.</span>
+        </li>
+      </ol>
+      <p class="hint"><code>docker-compose.yml</code> publishes <code>8000:8000</code>. That is the host port, then the container port. Curl and this page use the host port.</p>
+    </section>
+
+    <section class="card" aria-labelledby="request-heading">
+      <h2 id="request-heading">Request</h2>
+
+      <p class="label">Verb</p>
+      <div class="row" id="verbs" role="group" aria-label="HTTP verb">
+        <button type="button" data-verb="GET" class="on" aria-pressed="true">GET</button>
+        <button type="button" data-verb="POST" aria-pressed="false">POST</button>
+        <button type="button" data-verb="PUT" aria-pressed="false">PUT</button>
+        <button type="button" data-verb="DELETE" aria-pressed="false">DELETE</button>
+      </div>
+
+      <label>
+        Item id
+        <input type="number" id="item-id" min="1" value="1">
+      </label>
+      <p class="hint" id="id-hint">Leave blank to list every item. A number reads that one item.</p>
+
+      <p class="label">Header</p>
+      <div class="row" id="auth" role="group" aria-label="Auth header">
+        <button type="button" data-auth="none">No header</button>
+        <button type="button" data-auth="wrong-header">Wrong header</button>
+        <button type="button" data-auth="wrong-token">Wrong token</button>
+        <button type="button" data-auth="correct" class="on" aria-pressed="true">Correct token</button>
+      </div>
+      <p class="hint" id="auth-hint"></p>
+
+      <div id="body-block">
+        <p class="label">Body</p>
+        <div class="row" id="bodies" role="group" aria-label="JSON body">
+          <button type="button" data-body="valid" class="on" aria-pressed="true">Valid</button>
+          <button type="button" data-body="missing-name">Missing name</button>
+          <button type="button" data-body="bad-price">Price as text</button>
+        </div>
+        <label>
+          JSON
+          <textarea id="body" rows="5" spellcheck="false"></textarea>
+        </label>
+      </div>
+
+      <button type="button" id="send">Send</button>
+    </section>
+
+    <section class="card" aria-labelledby="result-heading">
+      <h2 id="result-heading">Result</h2>
+      <p id="pill" class="pill" aria-live="polite">—</p>
+      <p id="why" class="why"></p>
+      <pre id="response" class="out">Send a request.</pre>
+      <p class="label">Same call in the terminal</p>
+      <pre id="curl" class="out"></pre>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
